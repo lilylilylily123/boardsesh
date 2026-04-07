@@ -132,7 +132,7 @@ export const tickQueries = {
    */
   userAscentsFeed: async (
     _: unknown,
-    { userId, input }: { userId: string; input?: { limit?: number; offset?: number } }
+    { userId, input }: { userId: string; input?: { limit?: number; offset?: number; boardType?: string } }
   ): Promise<{
     items: unknown[];
     totalCount: number;
@@ -142,12 +142,16 @@ export const tickQueries = {
     const validatedInput = validateInput(AscentFeedInputSchema, input || {}, 'input');
     const limit = validatedInput.limit ?? 20;
     const offset = validatedInput.offset ?? 0;
+    const boardType = validatedInput.boardType;
 
     // Get total count of ticks for this user
     const countResult = await db
       .select({ count: count() })
       .from(dbSchema.boardseshTicks)
-      .where(eq(dbSchema.boardseshTicks.userId, userId));
+      .where(and(
+        eq(dbSchema.boardseshTicks.userId, userId),
+        ...(boardType ? [eq(dbSchema.boardseshTicks.boardType, boardType)] : []),
+      ));
 
     const totalCount = Number(countResult[0]?.count || 0);
 
@@ -176,7 +180,10 @@ export const tickQueries = {
           eq(dbSchema.boardseshTicks.boardType, dbSchema.boardDifficultyGrades.boardType)
         )
       )
-      .where(eq(dbSchema.boardseshTicks.userId, userId))
+      .where(and(
+        eq(dbSchema.boardseshTicks.userId, userId),
+        ...(boardType ? [eq(dbSchema.boardseshTicks.boardType, boardType)] : []),
+      ))
       .orderBy(desc(dbSchema.boardseshTicks.climbedAt))
       .limit(limit)
       .offset(offset);

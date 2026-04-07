@@ -130,6 +130,7 @@ export interface GetUserAscentsFeedQueryVariables {
   input?: {
     limit?: number;
     offset?: number;
+    boardType?: string;
   };
 }
 

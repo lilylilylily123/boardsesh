@@ -118,6 +118,8 @@ export const activityFeedTypeDefs = /* GraphQL */ `
     limit: Int
     "Number of items to skip"
     offset: Int
+    "Optional board type filter (kilter, tension, moonboard)"
+    boardType: String
   }
 
   """
