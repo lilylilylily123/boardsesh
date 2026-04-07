@@ -120,6 +120,22 @@ export const activityFeedTypeDefs = /* GraphQL */ `
     offset: Int
     "Optional board type filter (kilter, tension, moonboard)"
     boardType: String
+    "Optional status filter (flash, send, attempt)"
+    status: String
+    "Optional climb name search (case-insensitive partial match)"
+    climbName: String
+    "Optional minimum difficulty filter (difficulty_id)"
+    minDifficulty: Int
+    "Optional maximum difficulty filter (difficulty_id)"
+    maxDifficulty: Int
+    "Sort field: recent (default), hardest, easiest, mostAttempts"
+    sortBy: String
+    "Sort order: desc (default) or asc"
+    sortOrder: String
+    "Optional start date filter (ISO date string, inclusive)"
+    fromDate: String
+    "Optional end date filter (ISO date string, inclusive)"
+    toDate: String
   }
 
   """

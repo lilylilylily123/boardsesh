@@ -70,7 +70,7 @@ export default function LibraryPageContent({
   const hasInitialDiscoverData = initialDiscoverPlaylists != null;
 
   const [hasMounted, setHasMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState<'playlists' | 'logbook'>('playlists');
+  const [activeTab, setActiveTab] = useState<'playlists' | 'logbook'>('logbook');
   // Initialize selectedBoard from SSR data immediately when boardSlug is provided
   const [selectedBoard, setSelectedBoard] = useState<UserBoard | null>(
     () => findMatchingBoard(initialMyBoards, boardSlug),
@@ -318,8 +318,8 @@ export default function LibraryPageContent({
         onChange={handleTabChange}
         sx={{ mb: 2, minHeight: 36, '& .MuiTab-root': { minHeight: 36, textTransform: 'none', fontWeight: 500 } }}
       >
-        <Tab value="playlists" label="Playlists" />
         <Tab value="logbook" label="Logbook" />
+        <Tab value="playlists" label="Playlists" />
       </Tabs>
 
       {/* Board Selector */}

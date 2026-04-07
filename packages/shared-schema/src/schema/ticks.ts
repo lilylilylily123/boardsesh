@@ -100,6 +100,25 @@ export const ticksTypeDefs = /* GraphQL */ `
   }
 
   """
+  Input for updating an existing tick.
+  All fields are optional — only provided fields are updated.
+  """
+  input UpdateTickInput {
+    "Result of the attempt"
+    status: TickStatus
+    "Number of attempts"
+    attemptCount: Int
+    "User's quality rating (1-5)"
+    quality: Int
+    "User's difficulty rating"
+    difficulty: Int
+    "Whether this is a benchmark ascent"
+    isBenchmark: Boolean
+    "User comment"
+    comment: String
+  }
+
+  """
   Input for fetching user's ticks.
   """
   input GetTicksInput {

@@ -1,4 +1,4 @@
-import { eq, and, desc, inArray, sql, count } from 'drizzle-orm';
+import { eq, and, desc, asc, inArray, sql, count, ilike, gte, lte } from 'drizzle-orm';
 import type { ConnectionContext, BoardName } from '@boardsesh/shared-schema';
 import { SUPPORTED_BOARDS } from '@boardsesh/shared-schema';
 import { db } from '../../../db/client';
@@ -132,7 +132,7 @@ export const tickQueries = {
    */
   userAscentsFeed: async (
     _: unknown,
-    { userId, input }: { userId: string; input?: { limit?: number; offset?: number; boardType?: string } }
+    { userId, input }: { userId: string; input?: { limit?: number; offset?: number; boardType?: string; status?: string; climbName?: string; sortBy?: string; sortOrder?: string; minDifficulty?: number; maxDifficulty?: number; fromDate?: string; toDate?: string } }
   ): Promise<{
     items: unknown[];
     totalCount: number;
@@ -143,20 +143,28 @@ export const tickQueries = {
     const limit = validatedInput.limit ?? 20;
     const offset = validatedInput.offset ?? 0;
     const boardType = validatedInput.boardType;
+    const status = validatedInput.status;
+    const climbName = validatedInput.climbName;
+    const sortBy = validatedInput.sortBy ?? 'recent';
+    const sortOrder = validatedInput.sortOrder ?? 'desc';
+    const minDifficulty = validatedInput.minDifficulty;
+    const maxDifficulty = validatedInput.maxDifficulty;
+    const fromDate = validatedInput.fromDate;
+    const toDate = validatedInput.toDate;
 
-    // Get total count of ticks for this user
-    const countResult = await db
-      .select({ count: count() })
-      .from(dbSchema.boardseshTicks)
-      .where(and(
-        eq(dbSchema.boardseshTicks.userId, userId),
-        ...(boardType ? [eq(dbSchema.boardseshTicks.boardType, boardType)] : []),
-      ));
+    // Build shared WHERE conditions
+    const tickConditions = [
+      eq(dbSchema.boardseshTicks.userId, userId),
+      ...(boardType ? [eq(dbSchema.boardseshTicks.boardType, boardType)] : []),
+      ...(status ? [eq(dbSchema.boardseshTicks.status, status)] : []),
+      ...(minDifficulty !== undefined ? [gte(dbSchema.boardseshTicks.difficulty, minDifficulty)] : []),
+      ...(maxDifficulty !== undefined ? [lte(dbSchema.boardseshTicks.difficulty, maxDifficulty)] : []),
+      ...(fromDate ? [gte(dbSchema.boardseshTicks.climbedAt, fromDate)] : []),
+      ...(toDate ? [lte(dbSchema.boardseshTicks.climbedAt, toDate + 'T23:59:59.999Z')] : []),
+    ];
 
-    const totalCount = Number(countResult[0]?.count || 0);
-
-    // Fetch ticks with climb and grade data using JOINs (eliminates N+1 queries)
-    const results = await db
+    // Base query with JOINs (shared by count and data queries)
+    const baseQuery = db
       .select({
         tick: dbSchema.boardseshTicks,
         climbName: dbSchema.boardClimbs.name,
@@ -179,12 +187,44 @@ export const tickQueries = {
           eq(dbSchema.boardseshTicks.difficulty, dbSchema.boardDifficultyGrades.difficulty),
           eq(dbSchema.boardseshTicks.boardType, dbSchema.boardDifficultyGrades.boardType)
         )
+      );
+
+    // Full conditions including climb name filter (requires JOIN)
+    const allConditions = [
+      ...tickConditions,
+      ...(climbName ? [ilike(dbSchema.boardClimbs.name, `%${climbName}%`)] : []),
+    ];
+
+    // Get total count
+    const countQuery = db
+      .select({ count: count() })
+      .from(dbSchema.boardseshTicks)
+      .leftJoin(
+        dbSchema.boardClimbs,
+        and(
+          eq(dbSchema.boardseshTicks.climbUuid, dbSchema.boardClimbs.uuid),
+          eq(dbSchema.boardseshTicks.boardType, dbSchema.boardClimbs.boardType)
+        )
       )
-      .where(and(
-        eq(dbSchema.boardseshTicks.userId, userId),
-        ...(boardType ? [eq(dbSchema.boardseshTicks.boardType, boardType)] : []),
-      ))
-      .orderBy(desc(dbSchema.boardseshTicks.climbedAt))
+      .where(and(...allConditions));
+
+    const countResult = await countQuery;
+    const totalCount = Number(countResult[0]?.count || 0);
+
+    // Build ORDER BY based on sortBy/sortOrder
+    const dir = sortOrder === 'asc' ? asc : desc;
+    const orderByMap = {
+      recent: dir(dbSchema.boardseshTicks.climbedAt),
+      hardest: desc(dbSchema.boardseshTicks.difficulty),
+      easiest: asc(dbSchema.boardseshTicks.difficulty),
+      mostAttempts: desc(dbSchema.boardseshTicks.attemptCount),
+    } as const;
+    const orderClause = orderByMap[sortBy as keyof typeof orderByMap] ?? dir(dbSchema.boardseshTicks.climbedAt);
+
+    // Fetch paginated results
+    const results = await baseQuery
+      .where(and(...allConditions))
+      .orderBy(orderClause)
       .limit(limit)
       .offset(offset);
 

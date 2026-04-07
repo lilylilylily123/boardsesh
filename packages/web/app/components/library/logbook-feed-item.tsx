@@ -1,16 +1,23 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import MuiCard from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import MuiTypography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Rating from '@mui/material/Rating';
+import IconButton from '@mui/material/IconButton';
+import Menu from '@mui/material/Menu';
+import MuiMenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
 import CheckCircleOutlined from '@mui/icons-material/CheckCircleOutlined';
 import ElectricBoltOutlined from '@mui/icons-material/ElectricBoltOutlined';
 import CancelOutlined from '@mui/icons-material/CancelOutlined';
 import LocationOnOutlined from '@mui/icons-material/LocationOnOutlined';
+import MoreVertOutlined from '@mui/icons-material/MoreVertOutlined';
+import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import AscentThumbnail from '@/app/components/activity-feed/ascent-thumbnail';
@@ -54,9 +61,27 @@ const getStatusDisplay = (status: AscentFeedItem['status'], attemptCount: number
 interface LogbookFeedItemProps {
   item: AscentFeedItem;
   showBoardType?: boolean;
+  onDelete?: (uuid: string) => void;
 }
 
-const LogbookFeedItem: React.FC<LogbookFeedItemProps> = ({ item, showBoardType }) => {
+const LogbookFeedItem: React.FC<LogbookFeedItemProps> = ({ item, showBoardType, onDelete }) => {
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const menuOpen = Boolean(anchorEl);
+
+  const handleMenuOpen = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    e.stopPropagation();
+    setAnchorEl(e.currentTarget);
+  }, []);
+
+  const handleMenuClose = useCallback(() => {
+    setAnchorEl(null);
+  }, []);
+
+  const handleDelete = useCallback(() => {
+    handleMenuClose();
+    onDelete?.(item.uuid);
+  }, [onDelete, item.uuid, handleMenuClose]);
+
   const timeAgo = dayjs(item.climbedAt).fromNow();
   const statusDisplay = getStatusDisplay(item.status, item.attemptCount);
   const boardDisplay = getLayoutDisplayName(item.boardType, item.layoutId);
@@ -78,9 +103,9 @@ const LogbookFeedItem: React.FC<LogbookFeedItemProps> = ({ item, showBoardType }
             />
           )}
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '8px' }} className={styles.feedItemContent}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, minWidth: 0 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
                 <Chip
                   icon={statusDisplay.icon as React.ReactElement}
                   label={statusDisplay.label}
@@ -93,9 +118,30 @@ const LogbookFeedItem: React.FC<LogbookFeedItemProps> = ({ item, showBoardType }
                   {item.climbName}
                 </MuiTypography>
               </Box>
-              <MuiTypography variant="body2" component="span" color="text.secondary" className={styles.timeAgo}>
-                {timeAgo}
-              </MuiTypography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: '2px', flexShrink: 0 }}>
+                <MuiTypography variant="body2" component="span" color="text.secondary" className={styles.timeAgo}>
+                  {timeAgo}
+                </MuiTypography>
+                {onDelete && (
+                  <>
+                    <IconButton size="small" onClick={handleMenuOpen} sx={{ ml: 0.25, p: 0.5 }}>
+                      <MoreVertOutlined sx={{ fontSize: 18 }} />
+                    </IconButton>
+                    <Menu
+                      anchorEl={anchorEl}
+                      open={menuOpen}
+                      onClose={handleMenuClose}
+                      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                      transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                    >
+                      <MuiMenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
+                        <ListItemIcon><DeleteOutlined sx={{ color: 'error.main' }} /></ListItemIcon>
+                        <ListItemText>Delete</ListItemText>
+                      </MuiMenuItem>
+                    </Menu>
+                  </>
+                )}
+              </Box>
             </Box>
 
             <Box sx={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>

@@ -8,6 +8,9 @@ import MuiCard from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
+import MuiButton from '@mui/material/Button';
+import { HistoryOutlined } from '@mui/icons-material';
+import Link from 'next/link';
 import { EmptyState } from '@/app/components/ui/empty-state';
 import Logo from '@/app/components/brand/logo';
 import BackButton from '@/app/components/back-button';
@@ -150,6 +153,20 @@ export default function ProfilePageContent({ userId }: { userId: string }) {
                 Latest ascents and attempts
               </Typography>
               <AscentsFeed userId={userId} pageSize={10} />
+              {isOwnProfile && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                  <MuiButton
+                    component={Link}
+                    href="/playlists"
+                    startIcon={<HistoryOutlined />}
+                    variant="text"
+                    size="small"
+                    sx={{ textTransform: 'none' }}
+                  >
+                    View full logbook
+                  </MuiButton>
+                </Box>
+              )}
             </CardContent>
           </MuiCard>
         )}

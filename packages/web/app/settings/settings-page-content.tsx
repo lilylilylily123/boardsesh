@@ -15,6 +15,8 @@ import CircularProgress from '@mui/material/CircularProgress';
 import PersonOutlined from '@mui/icons-material/PersonOutlined';
 import UploadOutlined from '@mui/icons-material/UploadOutlined';
 import Instagram from '@mui/icons-material/Instagram';
+import HistoryOutlined from '@mui/icons-material/HistoryOutlined';
+import ChevronRightOutlined from '@mui/icons-material/ChevronRightOutlined';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Logo from '@/app/components/brand/logo';
@@ -22,6 +24,7 @@ import AuroraCredentialsSection from '@/app/components/settings/aurora-credentia
 import ControllersSection from '@/app/components/settings/controllers-section';
 import DeleteAccountSection from '@/app/components/settings/delete-account-section';
 import SetPasswordSection from '@/app/components/settings/set-password-section';
+import Link from 'next/link';
 import BackButton from '@/app/components/back-button';
 import { useWsAuthToken } from '@/app/hooks/use-ws-auth-token';
 import { usePartyProfile } from '@/app/components/party-manager/party-profile-context';
@@ -405,6 +408,33 @@ export default function SettingsPageContent() {
           linkedProviders={profile?.linkedProviders ?? []}
           onPasswordSet={fetchProfile}
         />
+
+        <MuiDivider sx={{ my: 2 }} />
+
+        <Card variant="outlined" sx={{ borderRadius: 2 }}>
+          <CardContent
+            component={Link}
+            href="/playlists"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              textDecoration: 'none',
+              color: 'inherit',
+              '&:hover': { bgcolor: 'action.hover' },
+              cursor: 'pointer',
+            }}
+          >
+            <HistoryOutlined color="action" />
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="subtitle2">Your Logbook</Typography>
+              <Typography variant="body2" color="text.secondary">
+                View and filter your logged climbs
+              </Typography>
+            </Box>
+            <ChevronRightOutlined color="action" />
+          </CardContent>
+        </Card>
 
         <MuiDivider sx={{ my: 2 }} />
 

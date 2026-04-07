@@ -131,6 +131,14 @@ export interface GetUserAscentsFeedQueryVariables {
     limit?: number;
     offset?: number;
     boardType?: string;
+    status?: 'flash' | 'send' | 'attempt';
+    climbName?: string;
+    sortBy?: 'recent' | 'hardest' | 'easiest' | 'mostAttempts';
+    sortOrder?: 'asc' | 'desc';
+    minDifficulty?: number;
+    maxDifficulty?: number;
+    fromDate?: string;
+    toDate?: string;
   };
 }
 
@@ -281,5 +289,61 @@ export interface GetUserProfileStatsQueryResponse {
   userProfileStats: {
     totalDistinctClimbs: number;
     layoutStats: LayoutStats[];
+  };
+}
+
+// ============================================
+// Tick Mutation Operations
+// ============================================
+
+export const DELETE_TICK = gql`
+  mutation DeleteTick($uuid: ID!) {
+    deleteTick(uuid: $uuid)
+  }
+`;
+
+export const UPDATE_TICK = gql`
+  mutation UpdateTick($uuid: ID!, $input: UpdateTickInput!) {
+    updateTick(uuid: $uuid, input: $input) {
+      uuid
+      status
+      attemptCount
+      quality
+      difficulty
+      isBenchmark
+      comment
+      updatedAt
+    }
+  }
+`;
+
+export interface DeleteTickVariables {
+  uuid: string;
+}
+
+export interface UpdateTickInput {
+  status?: 'flash' | 'send' | 'attempt';
+  attemptCount?: number;
+  quality?: number | null;
+  difficulty?: number | null;
+  isBenchmark?: boolean;
+  comment?: string;
+}
+
+export interface UpdateTickVariables {
+  uuid: string;
+  input: UpdateTickInput;
+}
+
+export interface UpdateTickResponse {
+  updateTick: {
+    uuid: string;
+    status: string;
+    attemptCount: number;
+    quality: number | null;
+    difficulty: number | null;
+    isBenchmark: boolean;
+    comment: string;
+    updatedAt: string;
   };
 }
